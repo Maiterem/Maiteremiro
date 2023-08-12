@@ -1,0 +1,74 @@
+---
+title: "TP1"
+author: "Maité Remiro"
+date: "2023-08-12"
+output: html_document
+---
+```{r}
+library(tidyverse)
+```
+
+## Introducción
+
+Para el presente trabajo se van analizar los datos del dataset *Organizaciones_Sociales*. Este dataset posee información pública y fue obtenido del portal de datos abiertos del Gobierno de la Ciudad Autónoma de Buenos Aires (GCBA).
+
+```{r}
+Organizaciones <- read.csv("Data/organizaciones_sociales.csv",
+                                    stringsAsFactors = TRUE,
+                                    encoding = "UTF-8")
+```
+
+Una de los primeros interrogantes que surgen a partir de una visualización preliminar de los datos, refiere a *qué tipo de instituciones/organizaciones* el GCBA denomina organizaciones sociales. Para dar respuesta a esta pregunta se utiza la función "Select". En esta línea, a fines de enriquecer el análisis también se seleccionan las variables: nombre, barrio, comuna y actividad.
+
+```{r}
+Seleccion <- select(Organizaciones, "nombre_ofi", "barrio", "comuna", "tipo_de_or","actividad")
+
+summary(Seleccion)
+```
+
+Mediante esta función se identifica que el Gobierno de la Ciudad Autónoma de Buenos Aires incluye dentro del registro de las organizaciones sociales otras dependencias estatales, como es el caso del Portal Inclusivo. Es decir, que no se limitan a organizaciones sociales de base, sino que las unifican.
+
+Respecto a donde se *localizan* estas organizaciones, se identifica que hay mayor presencia de las mismas en la zona sur de la Ciudad Autónoma de Buenos Aires: Barracas (comuna 4), Villa Soldati (comuna 8) y Villa Lugano (comuna 8), por mencionar los tres princiaples. Se considera que uno de los motivos por lo cual hay mayor cantidad de organizaciones en estos barrios es debido a las características socioeconómicas bajas de la población que allí reside.
+
+Continuando con el análisis, las organizaciones registradas son en su mayoría estatales (344), siguiendo por las no estatales (337), las de gestión asociada (19) y, por último, se detaca que no hay registro de 21 de ellas. Respecto a la actividad principal que desarrollan, se identifican: 130 establecimientos educativos, 102 registros que no poseen categorización y 89 comedores.
+
+En base hasta lo aquí explorado, se suma un nuevo interrogante respecto a si *la presencia de las organizaciones en los barrios de la zona sur son principalmente de dependencia estatal o no estatal*. Para esto se utiliza un operador denominado pipe para la comuna 8 y para la comuna 4, donde se concatenará un filtro para cada una, una selección de las variables “tipo_de_or” y “actividad” y, un rename de “tipo_de_or” por “dependencia” y “actividad” por “tipo_de_institución”-
+
+```{r}
+concatenar_pipe <- Organizaciones %>%
+  filter(comuna==8) %>% 
+  select(comuna, tipo_de_or, actividad) %>%
+  rename(dependencia=tipo_de_or, tipo_de_institución=actividad)
+summary(concatenar_pipe)
+```
+
+```{r}
+concatenar2 <- Organizaciones %>%
+  filter(comuna==4) %>%
+  select(comuna, tipo_de_or, actividad) %>%
+  rename(dependencia=tipo_de_or, tipo_de_institución=actividad)
+summary(concatenar2)
+  
+```
+
+En función de los datos, se visualiza una dferencia ente ambas comunas donde la comuna 8 posee mayor cantidad de organizaciones estatles y la comuna 4 mayor cantidad de organizaciones no estatales. A su vez, se reconoce que en los registros la comuna 8 tiene un total de 283 organizaciones, mientras que la comuna 4 registra 200 organizaciones. Respecto a la dependencia.
+
+Dado que la información de las comunas de interés no quedó unificada, se hace dicha unificación a través de la función "full_join" a partir de la variable en común, en este caso "comuna".
+
+```{r}
+comunas <- full_join(concatenar_pipe, concatenar2, by=c("comuna"="comuna"))
+```
+
+Por úlitmo, a lo largo del análisis y de la exploración de los datos se percibe que hay información faltante por comunas, en relación a la caracterización de las organizaciones sociales del GCBA. A los fines de poder identificar las comunas que faltan y el tipo de información de la cual no se tiene registro, se modifica la forma de visulaizar los datos, pasando la información de una visualización a lo largo, por una a lo ancho. 
+
+```{r}
+Ordenado <-Organizaciones %>% 
+  pivot_wider(names_from = "comuna", 
+              values_from = "tipo_de_or")
+```
+
+```{r}
+head(Ordenado)
+```
+
+Tal como se visualiza a partir de la función "head", hay un elevado número de datos faltantes por comuna si se tiene en cuenta la totalidad de variables de análisis. Además, tampoco se cuenta con información de la totalidad de comunas que componene la Ciudad Autónoma de Buenos Aires. En función de esta conclusión, se considera que no se puede hacer un análisis concluyente de la situación de cada comuna del GCBA, pero si se pueden identificar ciertas tendencias en cada una de las incluidas en esta base de datos.
